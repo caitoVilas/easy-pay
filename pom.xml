@@ -34,5 +34,6 @@
   <modules>
     <module>discovery-service</module>
     <module>commons-service</module>
+    <module>merchant-service</module>
   </modules>
 </project>
