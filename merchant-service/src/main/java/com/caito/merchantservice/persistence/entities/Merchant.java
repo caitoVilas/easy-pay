@@ -1,5 +1,6 @@
 package com.caito.merchantservice.persistence.entities;
 
+import com.caito.merchantservice.utils.enums.BusinessYtpe;
 import com.caito.merchantservice.utils.enums.MerchantStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,7 +39,7 @@ public class Merchant {
     @Enumerated(EnumType.STRING)
     private MerchantStatus status;
     @Enumerated(EnumType.STRING)
-    private MerchantStatus businessType;
+    private BusinessYtpe businessType;
     private String apiKey;
     private String webhookUrl;
     @CreationTimestamp

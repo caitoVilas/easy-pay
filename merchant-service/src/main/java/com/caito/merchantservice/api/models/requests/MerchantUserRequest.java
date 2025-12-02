@@ -19,5 +19,4 @@ public class MerchantUserRequest implements Serializable {
     private String address;
     private String email;
     private String password;
-    private RoleName role;
 }
