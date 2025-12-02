@@ -7,6 +7,7 @@ package com.pp.commonsservice.enums;
  *
  */
 public enum RoleName {
+    ROLE_SUPERVISOR,
     ROLE_ADMIN,
     ROLE_USER
 }
