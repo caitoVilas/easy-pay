@@ -38,6 +38,7 @@ public class UserMapper {
                 .email(merchantUser.getEmail())
                 .phone(merchantUser.getPhone())
                 .address(merchantUser.getAddress())
+                .roles(merchantUser.getRoles().stream().map(RoleMapper::mapToDto).toList())
                 .build();
     }
 }

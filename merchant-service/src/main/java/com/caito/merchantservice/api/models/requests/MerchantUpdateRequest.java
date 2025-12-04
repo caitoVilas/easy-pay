@@ -1,23 +1,21 @@
-package com.caito.merchantservice.api.models.responses;
+package com.caito.merchantservice.api.models.requests;
 
 import com.caito.merchantservice.utils.enums.BusinessYtpe;
-import com.caito.merchantservice.utils.enums.MerchantStatus;
 import lombok.*;
 
 import java.io.Serializable;
 
 /*
- * MerchantResponse is a DTO representing the response model for merchant data.
+ * MerchantUpdateRequest represents the data required to update a merchant's information.
  *
  * @author Caito
  *
  */
 @NoArgsConstructor@AllArgsConstructor
 @Getter@Setter@Builder
-public class MerchantResponse implements Serializable {
-    private Long id;
+public class MerchantUpdateRequest implements Serializable {
     private String businessName;
-    private String taxId;
+    private String TaxId;
     private String email;
     private String phone;
     private String address;
@@ -25,8 +23,6 @@ public class MerchantResponse implements Serializable {
     private String state;
     private String zipCode;
     private String country;
-    private String apiKey;
-    private MerchantStatus status;
     private BusinessYtpe businessType;
     private String webhookUrl;
 }
