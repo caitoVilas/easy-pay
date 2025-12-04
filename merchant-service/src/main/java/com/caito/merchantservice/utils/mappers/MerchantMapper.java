@@ -50,6 +50,7 @@ public class MerchantMapper {
                 .state(merchant.getState())
                 .zipCode(merchant.getZipCode())
                 .country(merchant.getCountry())
+                .apiKey(merchant.getApiKey())
                 .status(merchant.getStatus())
                 .businessType(merchant.getBusinessType())
                 .webhookUrl(merchant.getWebhookUrl())
