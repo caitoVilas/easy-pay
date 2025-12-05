@@ -99,7 +99,7 @@ public interface MerchantController {
     })
     public ResponseEntity<MerchantResponse> getMerchantById(@PathVariable Long id);
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     @SecurityRequirement(name = "security token")
     @Operation(summary = "Update Merchant by Id")
     @Parameters({
@@ -127,7 +127,7 @@ public interface MerchantController {
     public ResponseEntity<MerchantResponse> updateMerchant(@PathVariable Long id,
                                                            @RequestBody MerchantUpdateRequest request);
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     @SecurityRequirement(name = "security token")
     @Operation(summary = "Delete Merchant by Id")
     @Parameter(name = "id", description = "Merchant Id")
