@@ -5,6 +5,7 @@ import com.caito.merchantservice.api.models.requests.MerchantUpdateRequest;
 import com.caito.merchantservice.api.models.requests.MerchantUserRequest;
 import com.caito.merchantservice.api.models.responses.MerchantResponse;
 import com.caito.merchantservice.api.models.responses.MerchantUserResponse;
+import com.caito.merchantservice.persistence.entities.Merchant;
 import com.caito.merchantservice.persistence.entities.MerchantUser;
 import com.caito.merchantservice.persistence.entities.Role;
 import com.caito.merchantservice.persistence.repositories.MerchantRepository;
@@ -17,14 +18,18 @@ import com.caito.merchantservice.utils.mappers.UserMapper;
 import com.pp.commonsservice.enums.RoleName;
 import com.pp.commonsservice.exceptions.BadRequestException;
 import com.pp.commonsservice.exceptions.NotFoundException;
+import com.pp.commonsservice.exceptions.UnauthorizedException;
 import com.pp.commonsservice.helpers.ValidationHelper;
 import com.pp.commonsservice.logs.WriteLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -99,6 +104,11 @@ public class MerchantServiceImpl implements MerchantService {
         var merchant = merchantRepository.findById(merchantId).orElseThrow(
                 () -> new NotFoundException("Merchant with id " + merchantId + " not found")
         );
+
+        if (!this.permission(merchant)) {
+            log.warn(WriteLog.logWarning("--> Unauthorized access"));
+            throw new UnauthorizedException("Unauthorized");
+        }
         return merchant.getUsers().stream().map(UserMapper::mapToDto).toList();
     }
 
@@ -112,11 +122,17 @@ public class MerchantServiceImpl implements MerchantService {
     @Transactional(readOnly = true)
     public MerchantResponse getMerchantById(Long merchantId) {
         log.info(WriteLog.logInfo("--> Get Merchant Service"));
-        return MerchantMapper.mapToDto(merchantRepository.findById(merchantId).orElseThrow(
+        var merchant = merchantRepository.findById(merchantId).orElseThrow(
                 () -> {
-                    log.warn(WriteLog.logWarning("Merchant with id " + merchantId + " not found"));
-                    return new NotFoundException("Merchant with id " + merchantId + " not found");}
-        ));
+                    log.warn(WriteLog.logWarning("--> Merchant not found"));
+                    return new NotFoundException("Merchant with id " + merchantId + " not found");
+                }
+        );
+        if (!this.permission(merchant)) {
+            log.warn(WriteLog.logWarning("--> Unauthorized access"));
+            throw new UnauthorizedException("Unauthorized");
+        }
+        return MerchantMapper.mapToDto(merchant);
     }
 
     /*      Update Merchant
@@ -137,6 +153,10 @@ public class MerchantServiceImpl implements MerchantService {
                     return new NotFoundException("Merchant with id " + merchantId + " not found");
                 }
         );
+        if (!this.permission(oldMerchant)) {
+            log.warn(WriteLog.logWarning("--> Unauthorized access"));
+            throw new UnauthorizedException("Unauthorized");
+        }
         if (request.getBusinessName() != null && !request.getBusinessName().isEmpty()){
             oldMerchant.setBusinessName(request.getBusinessName());
         }
@@ -289,5 +309,25 @@ public class MerchantServiceImpl implements MerchantService {
         if (user.getPhone() == null || user.getPhone().isEmpty()){
             errors.add("Merchant admin phone is required.");
         }
+    }
+
+    /*     * Check Permission
+     *
+     * @param merchantId String
+     * @return boolean
+     */
+    private boolean permission(Merchant merchant){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assert authentication != null;
+        MerchantUser principal = (MerchantUser) authentication.getPrincipal();
+        MerchantUser user = merchantUserRepository.findById(principal.getId()).orElseThrow(
+                () -> new NotFoundException("--> not fund")
+        );
+        boolean isSupervisor = principal.getRoles().stream()
+                .anyMatch(role -> role.getRole().equals(RoleName.ROLE_SUPERVISOR));
+        String apiKeyPricipal = user.getMerchant().getApiKey();
+        if (isSupervisor){
+            return true;
+        }else return apiKeyPricipal.equals(merchant.getApiKey());
     }
 }

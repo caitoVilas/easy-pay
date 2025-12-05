@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -56,7 +57,18 @@ public class SecurityConfig {
                 csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/.well-known/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/v1/merchants/register").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/v1/auth/login/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT,"/v1/merchants/update/**")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/v1/merchants/delete/**")
+                        .hasRole("SUPERVISOR")
+                        .requestMatchers(HttpMethod.GET,"/v1/merchants/all/**")
+                        .hasRole("SUPERVISOR")
+                        .anyRequest().authenticated()
                 )
                 .authenticationManager(authenticationManager)
                 .sessionManagement(ses -> ses.sessionCreationPolicy(

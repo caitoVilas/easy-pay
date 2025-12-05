@@ -32,7 +32,7 @@ public class JwtEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException
                                                        authException) throws IOException, ServletException {
-        final String msg = "Unauthorized";
+        final String msg = "--> Unauthorized";
         var res = ErrorResponse.builder()
                 .code(HttpStatus.UNAUTHORIZED.value())
                 .status(HttpStatus.UNAUTHORIZED.getReasonPhrase())
@@ -41,7 +41,7 @@ public class JwtEntryPoint implements AuthenticationEntryPoint {
                 .method(request.getMethod())
                 .path(request.getRequestURL().toString())
                 .build();
-        log.error(WriteLog.logError("--> Unauthorized"));
+        log.error(WriteLog.logError(msg));
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         ObjectMapper mapper = new ObjectMapper();

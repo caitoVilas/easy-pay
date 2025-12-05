@@ -4,13 +4,13 @@ import com.caito.merchantservice.configs.security.keys.KeyUtils;
 import com.caito.merchantservice.persistence.entities.MerchantUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.util.Date;
 import java.util.List;
 
@@ -26,8 +26,13 @@ import java.util.List;
 @Slf4j
 public class JwtProvider {
     private static final long EXPIRATION_TIME = 3600000;
-    private final PrivateKey privateKey = KeyUtils.generateKeyPair().getPrivate();
-    private final PublicKey publicKey = KeyUtils.generateKeyPair().getPublic();
+    private PrivateKey privateKey = KeyUtils.generateKeyPair().getPrivate();
+    private PublicKey publicKey = KeyUtils.generateKeyPair().getPublic();
+
+    @PostConstruct
+    public void init() {
+        generateKeyPair();
+    }
 
     /**
      * Generates a JWT token for the given authenticated user.
@@ -38,10 +43,12 @@ public class JwtProvider {
     public String generateToken(Authentication authentication) {
         MerchantUser user = (MerchantUser) authentication.getPrincipal();
         assert user != null;
+        String apiKey = user.getMerchant().getApiKey();
         return Jwts.builder()
                 .subject(user.getEmail())
                 .issuedAt(new Date())
                 .claim("roles", getRoles(user))
+                .claim("api_key", apiKey)
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(privateKey, Jwts.SIG.RS256)
                 .compact();
@@ -95,5 +102,18 @@ public class JwtProvider {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
     }
+
+    private void generateKeyPair() {
+        try {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+            kpg.initialize(2048);
+            KeyPair kp = kpg.generateKeyPair();
+            this.privateKey = kp.getPrivate();
+            this.publicKey = kp.getPublic();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
 }
