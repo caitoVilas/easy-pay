@@ -313,7 +313,7 @@ public class MerchantServiceImpl implements MerchantService {
 
     /*     * Check Permission
      *
-     * @param merchantId String
+     * @param merchant Merchant
      * @return boolean
      */
     private boolean permission(Merchant merchant){

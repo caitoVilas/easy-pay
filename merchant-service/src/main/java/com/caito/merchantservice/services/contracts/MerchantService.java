@@ -2,6 +2,7 @@ package com.caito.merchantservice.services.contracts;
 
 import com.caito.merchantservice.api.models.requests.MerchantRequest;
 import com.caito.merchantservice.api.models.requests.MerchantUpdateRequest;
+import com.caito.merchantservice.api.models.requests.MerchantUserRequest;
 import com.caito.merchantservice.api.models.responses.MerchantResponse;
 import com.caito.merchantservice.api.models.responses.MerchantUserResponse;
 

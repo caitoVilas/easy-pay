@@ -68,6 +68,8 @@ public class SecurityConfig {
                         .hasRole("SUPERVISOR")
                         .requestMatchers(HttpMethod.GET,"/v1/merchants/all/**")
                         .hasRole("SUPERVISOR")
+                        .requestMatchers(HttpMethod.POST,"/v1/merchants/users/register/**")
+                        .hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationManager(authenticationManager)
