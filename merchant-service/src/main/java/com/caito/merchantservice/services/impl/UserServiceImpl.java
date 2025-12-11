@@ -1,6 +1,8 @@
 package com.caito.merchantservice.services.impl;
 
+import com.caito.merchantservice.api.models.requests.CreatePasswordRequest;
 import com.caito.merchantservice.api.models.requests.MerchantUserRequest;
+import com.caito.merchantservice.api.models.requests.MerchantUserUpdateRequest;
 import com.caito.merchantservice.api.models.responses.MerchantUserResponse;
 import com.caito.merchantservice.persistence.entities.Merchant;
 import com.caito.merchantservice.persistence.entities.MerchantUser;
@@ -73,6 +75,137 @@ public class UserServiceImpl implements UserService {
         user.setMerchant(merchant);
         return UserMapper.mapToDto(merchantUserRepository.save(user));
     }
+
+    /*
+     * Retrieves a user by ID associated with a merchant.
+     *
+     * @param userId     The ID of the user.
+     * @param merchantId The ID of the merchant.
+     * @return The user's response data.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public MerchantUserResponse getUserById(Long userId, Long merchantId) {
+        log.info(WriteLog.logInfo("--> Get user by id"));
+        var merchant = this.getMerchant(merchantId);
+        if (!this.permission(merchant)){;
+            log.error(WriteLog.logError("Permission denied to create user for merchant ID: " + merchantId));
+            throw new UnauthorizedException("Unauthorized to create user for this merchant");
+        }
+        return UserMapper.mapToDto(merchantUserRepository.findById(userId).orElseThrow(
+                () -> {
+                    log.error(WriteLog.logError("User with ID " + userId + " not found"));
+                    return new NotFoundException("User with ID " + userId + " not found");
+                }
+        ));
+    }
+
+    /*
+     * Updates an existing user associated with a merchant.
+     *
+     * @param userId  The ID of the user.
+     * @param request The user update request data.
+     * @return The updated user's response data.
+     */
+    @Override
+    public MerchantUserResponse updateUser(Long userId, MerchantUserUpdateRequest request) {
+        log.info(WriteLog.logInfo("--> Update user"));
+        var merchant = this.getMerchant(request.getMerchantId());
+        if (!this.permission(merchant)){;
+            log.error(WriteLog.logError("Permission denied to create user for merchant ID: " + request.getMerchantId()));
+            throw new UnauthorizedException("Unauthorized to create user for this merchant");
+        }
+        var user = merchantUserRepository.findById(userId).orElseThrow(
+                () -> {
+                    log.error(WriteLog.logError("User with ID " + userId + " not found"));
+                    return new NotFoundException("User with ID " + userId + " not found");
+                }
+        );
+        if (request.getFullName() != null && !request.getFullName().isEmpty()) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+            if (merchantUserRepository.findByEmailAndNotId(userId, request.getEmail()) != null) {
+                log.error(WriteLog.logError("Email is already in use."));
+                throw new BadRequestException(List.of("Email is already in use."));
+            } else if (!ValidationHelper.validateEmail(request.getEmail())) {
+                log.error(WriteLog.logError("Email is not valid."));
+                throw new BadRequestException(List.of("Email is not valid."));
+            }
+            user.setEmail(request.getEmail());
+        }
+        if (request.getAddress() != null && !request.getAddress().isEmpty()) {
+            user.setAddress(request.getAddress());
+        }
+        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
+            user.setPhone(request.getPhone());
+        }
+        return UserMapper.mapToDto(merchantUserRepository.save(user));
+    }
+
+    /*
+     * Deletes a user by ID associated with a merchant.
+     *
+     * @param userId     The ID of the user.
+     * @param merchantId The ID of the merchant.
+     */
+    @Override
+    @Transactional
+    public void deleteUser(Long userId, Long merchantId) {
+        log.info(WriteLog.logInfo("--> Delete user by id"));
+        var merchant = this.getMerchant(merchantId);
+        if (!this.permission(merchant)){;
+            log.error(WriteLog.logError("Permission denied to create user for merchant ID: " + merchantId));
+            throw new UnauthorizedException("Unauthorized to create user for this merchant");
+        }
+        var user = merchantUserRepository.findById(userId).orElseThrow(
+                () -> {
+                    log.error(WriteLog.logError("User with ID " + userId + " not found"));
+                    return new NotFoundException("User with ID " + userId + " not found");
+                }
+        );
+        merchantUserRepository.delete(user);
+    }
+
+    /*
+     * Creates or updates a password for a user.
+     *
+     * @param request The password creation request data.
+     */
+    @Override
+    @Transactional
+    public void createPassword(CreatePasswordRequest request) {
+        log.info(WriteLog.logInfo("--> Creating password"));
+        var merchant = this.getMerchant(request.getMerchantId());
+        if (!this.permission(merchant)){;
+            log.error(WriteLog.logError("Permission denied to create user for merchant ID: " + request.getMerchantId()));
+            throw new UnauthorizedException("Unauthorized to create user for this merchant");
+        }
+        var user = merchantUserRepository.findById(request.getUserId()).orElseThrow(
+                () -> {
+                    log.error(WriteLog.logError("User with ID " + request.getUserId() + " not found"));
+                    return new NotFoundException("User with ID " + request.getUserId() + " not found");
+                }
+        );
+        if (request.getPassword() == null || request.getPassword().isEmpty()) {
+            log.error(WriteLog.logError("Password is required."));
+            throw new BadRequestException(List.of("Password is required."));
+        }
+        if (request.getConfirmPassword() == null || request.getConfirmPassword().isEmpty()) {
+            log.error(WriteLog.logError("Confirm password is required."));
+            throw new BadRequestException(List.of("Confirm password is required."));
+        }
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            log.error(WriteLog.logError("Passwords do not match."));
+            throw new BadRequestException(List.of("Passwords do not match."));
+        } else if (!ValidationHelper.validatePassword(request.getPassword())) {
+            log.error(WriteLog.logError("Invalid password format."));
+            throw new BadRequestException(List.of("Invalid password format."));
+        }
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        merchantUserRepository.save(user);
+    }
+
 
     /*
      * Fetches a merchant by ID.
