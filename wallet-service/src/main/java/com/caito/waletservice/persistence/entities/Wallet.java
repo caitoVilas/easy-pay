@@ -42,6 +42,4 @@ public class Wallet {
     private LocalDateTime createdAt;
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-    @Version
-    private Long version;
 }

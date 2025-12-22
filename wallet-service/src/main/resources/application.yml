@@ -27,3 +27,4 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
       register-with-eureka: true
       fetch-registry: true
+base-url-merchant : http://merchant-service:30000/merchant-service/api/merchants
